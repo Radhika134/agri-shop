@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2d5a1a;
+  --color-accent: #d4870e;
+  --color-cream: #fafdf6;
+  --color-forest: #1a2e0a;
+  --color-danger: #c53030;
+  --color-success: #2f855a;
+  --color-teal: #1a6b5c;
+  --font-family-serif: "DM Serif Display", serif;
+  --font-family-sans: "DM Sans", sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-cream);
+  color: var(--color-forest);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-modal-slide-in {
+  animation: modal-slide-in 0.2s ease-out;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-print,
+  #receipt-print *,
+  #bill-history-receipt,
+  #bill-history-receipt * {
+    visibility: visible;
+  }
+
+  #receipt-print,
+  #bill-history-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+  }
+}
