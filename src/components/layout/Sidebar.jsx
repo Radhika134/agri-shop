@@ -33,40 +33,43 @@ export default function Sidebar({ isOpen, onClose, onSignOut }) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1a2e0a] border-r border-[#2d5a1a]/30 text-white flex flex-col transition-transform duration-300 transform lg:translate-x-0 lg:static lg:inset-0 ${
+      className={`fixed inset-y-0 left-0 z-50 w-64 h-screen bg-[#1a2e0a] border-r border-[#2d5a1a]/30 text-white flex flex-col transition-transform duration-300 transform lg:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } no-print`}
     >
-      {/* Logo Area */}
-      <div className="p-6 border-b border-[#2d5a1a]/30 flex flex-col">
-        <div className="flex items-center gap-2">
-          <Wheat className="w-6 h-6 text-[#D4870E]" strokeWidth={1.75} />
-          <span className="font-serif text-xl text-white font-bold tracking-tight">
-            Kisan Khad Bhandar
+      {/* Scrollable Container for Top Section (Logo + Navigation) */}
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+        {/* Logo Area */}
+        <div className="p-6 border-b border-[#2d5a1a]/30 flex flex-col shrink-0">
+          <div className="flex items-center gap-2">
+            <Wheat className="w-6 h-6 text-[#D4870E]" strokeWidth={1.75} />
+            <span className="font-serif text-xl text-white font-bold tracking-tight">
+              Kisan Khad Bhandar
+            </span>
+          </div>
+          <span className="text-xs text-white/70 mt-1 font-medium font-sans">
+            Sachin Aggarwal
           </span>
         </div>
-        <span className="text-xs text-white/70 mt-1 font-medium font-sans">
-          Sachin Aggarwal
-        </span>
+
+        {/* Navigation Menu */}
+        <nav className="p-4 space-y-1">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <RouterNavLink
+              key={to}
+              to={to}
+              onClick={onClose}
+              className={navLinkClass}
+            >
+              <Icon className="w-5 h-5 shrink-0" />
+              <span>{label}</span>
+            </RouterNavLink>
+          ))}
+        </nav>
       </div>
 
-      {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <RouterNavLink
-            key={to}
-            to={to}
-            onClick={onClose}
-            className={navLinkClass}
-          >
-            <Icon className="w-5 h-5 shrink-0" />
-            <span>{label}</span>
-          </RouterNavLink>
-        ))}
-      </nav>
-
-      {/* Footer Area */}
-      <div className="p-4 border-t border-[#2d5a1a]/30 space-y-3">
+      {/* Bottom Section (Non-scrollable, pinned to bottom) */}
+      <div className="mt-auto p-4 border-t border-[#2d5a1a]/30 space-y-3 shrink-0 bg-[#1a2e0a]">
         {isInstallable && (
           <button
             type="button"

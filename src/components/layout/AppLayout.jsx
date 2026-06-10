@@ -38,7 +38,7 @@ export default function AppLayout() {
       />
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:pl-64">
         {/* Mobile Header Bar */}
         <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-[#D8E4C8] flex items-center justify-between h-16 px-4 lg:hidden no-print shrink-0">
           <button

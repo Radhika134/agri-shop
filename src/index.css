@@ -60,6 +60,20 @@ body {
 
 /* ── Print layout ─────────────────────────────────────────────────────────── */
 @media print {
-  .no-print { display: none !important; }
-  .print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+  body * {
+    visibility: hidden;
+  }
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

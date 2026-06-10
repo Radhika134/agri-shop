@@ -26,7 +26,7 @@ const INITIAL_FORM = {
 }
 
 export default function BillingPage() {
-  const { products, loading: productsLoading } = useProducts()
+  const { products, loading: productsLoading, refresh: refreshProducts } = useProducts()
   const { createBill } = useBills()
 
   const [form, setForm] = useState(INITIAL_FORM)
@@ -145,6 +145,7 @@ export default function BillingPage() {
 
     if (result.success) {
       setCreatedBill(result.bill)
+      await refreshProducts()
     }
   }
 
