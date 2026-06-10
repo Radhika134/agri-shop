@@ -1,30 +1,33 @@
 import { formatDateTime, formatINR } from '../../utils/format'
 
 function getPaymentLabel(bill) {
+  if (!bill) return ''
   if (bill.payment_mode === 'Udhar') {
     return `Udhar — Paid: ${formatINR(bill.amount_paid, 2)}, Due: ${formatINR(bill.amount_due, 2)}`
   }
-  return bill.payment_mode
+  return bill.payment_mode || 'Cash'
 }
 
 function normalizeItems(bill) {
+  if (!bill) return []
+  
   if (bill.items?.length) {
-    return bill.items.map((item) => ({
-      id: item.product_id ?? item.productId ?? item.id,
-      productName: item.product_name ?? item.productName,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.subtotal,
+    return (bill.items || []).map((item) => ({
+      id: item?.product_id ?? item?.productId ?? item?.id,
+      productName: item?.product_name ?? item?.productName ?? '—',
+      quantity: item?.quantity ?? 0,
+      price: item?.price ?? 0,
+      subtotal: item?.subtotal ?? 0,
     }))
   }
 
   if (bill.bill_items?.length) {
-    return bill.bill_items.map((item) => ({
-      id: item.product_id ?? item.id,
-      productName: item.product_name,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.subtotal,
+    return (bill.bill_items || []).map((item) => ({
+      id: item?.product_id ?? item?.id,
+      productName: item?.product_name ?? '—',
+      quantity: item?.quantity ?? 0,
+      price: item?.price ?? 0,
+      subtotal: item?.subtotal ?? 0,
     }))
   }
 
@@ -33,8 +36,8 @@ function normalizeItems(bill) {
 
 export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
   const items = normalizeItems(bill)
-  const customerName = bill.customer_name ?? bill.customers?.name ?? 'Walk-in Customer'
-  const customerPhone = bill.customer_phone ?? bill.customers?.phone
+  const customerName = bill?.customer_name ?? bill?.customers?.name ?? 'Walk-in Customer'
+  const customerPhone = bill?.customer_phone ?? bill?.customers?.phone
 
   return (
     <div
@@ -43,7 +46,7 @@ export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
     >
       <div className="text-center mb-6">
         <h1 className="font-serif text-3xl text-primary">Kisan Khad Bhandar</h1>
-        <p className="text-forest/50 text-sm mt-1">{formatDateTime(bill.created_at)}</p>
+        <p className="text-forest/50 text-sm mt-1">{formatDateTime(bill?.created_at)}</p>
       </div>
 
       <div className="mb-5 text-sm">
@@ -67,13 +70,13 @@ export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-[#D8E4C8]/60">
-          {items.map((item) => (
-            <tr key={item.id}>
-              <td className="py-2 text-forest pr-2">{item.productName}</td>
-              <td className="py-2 text-center text-forest">{item.quantity}</td>
-              <td className="py-2 text-right text-forest">{formatINR(item.price, 2)}</td>
+          {(items || []).map((item) => (
+            <tr key={item?.id}>
+              <td className="py-2 text-forest pr-2">{item?.productName}</td>
+              <td className="py-2 text-center text-forest">{item?.quantity}</td>
+              <td className="py-2 text-right text-forest">{formatINR(item?.price, 2)}</td>
               <td className="py-2 text-right text-forest font-medium">
-                {formatINR(item.subtotal, 2)}
+                {formatINR(item?.subtotal, 2)}
               </td>
             </tr>
           ))}
@@ -84,7 +87,7 @@ export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
         <div className="flex justify-between items-center">
           <span className="text-forest/60">Total Amount</span>
           <span className="text-2xl font-bold text-forest">
-            {formatINR(bill.total_amount, 2)}
+            {formatINR(bill?.total_amount ?? 0, 2)}
           </span>
         </div>
         <p className="text-sm text-forest/70">

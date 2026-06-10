@@ -26,48 +26,49 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
   const [billItems, setBillItems] = useState([])
   const [resolvedName, setResolvedName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const fetchDetails = async () => {
+    if (!transaction) return
+    setLoading(true)
+    setError(null)
+    try {
+      if (transaction.type === 'bill') {
+        const { data, error: fetchErr } = await supabase
+          .from('bill_items')
+          .select('*')
+          .eq('bill_id', transaction.id)
+        if (fetchErr) throw fetchErr
+        setBillItems(data || [])
+        setResolvedName(transaction.customer_name ?? 'Walk-in Customer')
+      } else if (transaction.type === 'payment' && transaction.customer_id) {
+        const { data, error: fetchErr } = await supabase
+          .from('customers')
+          .select('name')
+          .eq('id', transaction.customer_id)
+          .single()
+        if (fetchErr) throw fetchErr
+        setResolvedName(data?.name ?? 'Walk-in Customer')
+      } else if (transaction.type === 'return') {
+        // Customer name is already joined via bills in the parent
+        setResolvedName(transaction.customer_name ?? transaction.bills?.customer_name ?? '—')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load details')
+      toast.error(err.message || 'Failed to load details')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isOpen || !transaction) {
       setBillItems([])
       setResolvedName('')
+      setError(null)
       return
     }
-    let mounted = true
-
-    async function fetchDetails() {
-      setLoading(true)
-      try {
-        if (transaction.type === 'bill') {
-          const { data, error } = await supabase
-            .from('bill_items')
-            .select('*')
-            .eq('bill_id', transaction.id)
-          if (error) throw error
-          if (mounted) {
-            setBillItems(data ?? [])
-            setResolvedName(transaction.customer_name ?? 'Walk-in Customer')
-          }
-        } else if (transaction.type === 'payment' && transaction.customer_id) {
-          const { data, error } = await supabase
-            .from('customers')
-            .select('name')
-            .eq('id', transaction.customer_id)
-            .single()
-          if (!error && data && mounted) setResolvedName(data.name)
-        } else if (transaction.type === 'return') {
-          // Customer name is already joined via bills in the parent
-          if (mounted) setResolvedName(transaction.customer_name ?? transaction.bills?.customer_name ?? '—')
-        }
-      } catch (err) {
-        toast.error(err.message || 'Failed to load details')
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
     fetchDetails()
-    return () => { mounted = false }
   }, [isOpen, transaction])
 
   if (!isOpen || !transaction) return null
@@ -95,6 +96,10 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
     const printContent = document.getElementById('bill-print-area')?.innerHTML
     if (!printContent) return
     const win = window.open('', '_blank', 'width=420,height=600')
+    if (!win) {
+      toast.error('Popup blocked. Please allow popups to print receipt.')
+      return
+    }
     win.document.write(`
       <html>
         <head>
@@ -127,7 +132,7 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
   const handleWhatsApp = () => {
     const billForWa = {
       ...transaction,
-      bill_items: billItems,
+      bill_items: billItems || [],
       customer_phone: transaction.customer_phone ?? '',
     }
     shareBillOnWhatsApp(billForWa)
@@ -142,7 +147,7 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg bg-white border border-[#D8E4C8] rounded-xl shadow-xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-lg bg-white border border-[#D8E4C8] rounded-xl shadow-xl overflow-hidden max-h-[90vh] md:max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className={`p-5 border-b border-[#D8E4C8] flex items-center justify-between shrink-0 no-print ${headerBg}`}>
           <div className="flex items-center gap-3">
@@ -153,13 +158,14 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
               <h2 className="font-serif text-xl text-forest">
                 {isBill ? 'Bill Receipt' : isPayment ? 'Payment Details' : 'Return Details'}
               </h2>
-              <p className="text-xs text-forest/50 mt-0.5">{formatDateTime(transaction.created_at)}</p>
+              <p className="text-xs text-forest/50 mt-0.5">{formatDateTime(transaction?.created_at)}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-[#D8E4C8] text-forest/60 hover:text-forest transition-colors bg-white no-print"
+            className="p-2 rounded-lg border border-[#D8E4C8] text-forest/60 hover:text-forest transition-colors bg-white no-print"
+            aria-label="Close details"
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,6 +177,17 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
+          ) : error ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-danger font-medium">{error}</p>
+              <button
+                type="button"
+                onClick={fetchDetails}
+                className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           ) : (
             <>
               {/* Customer + Mode */}
@@ -178,22 +195,22 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                 <div className="p-3 rounded-lg border border-[#D8E4C8] bg-cream/40">
                   <p className="text-xs text-forest/50 font-medium">Customer</p>
                   <p className="text-sm font-semibold text-forest mt-1 truncate">
-                    {resolvedName || transaction.customer_name || 'Walk-in Customer'}
+                    {resolvedName || transaction?.customer_name || 'Walk-in Customer'}
                   </p>
                 </div>
-                {(isBill || isPayment) && transaction.payment_mode && (
+                {(isBill || isPayment) && transaction?.payment_mode && (
                   <div className="p-3 rounded-lg border border-[#D8E4C8] bg-cream/40">
                     <p className="text-xs text-forest/50 font-medium">Payment Mode</p>
                     <span className={`inline-flex items-center gap-1.5 mt-1 text-xs font-semibold px-2.5 py-1 rounded-full ${modeColor}`}>
                       <ModeIcon className="w-3.5 h-3.5" />
-                      {transaction.payment_mode}
+                      {transaction?.payment_mode}
                     </span>
                   </div>
                 )}
                 {isReturn && (
                   <div className="p-3 rounded-lg border border-[#D8E4C8] bg-cream/40">
                     <p className="text-xs text-forest/50 font-medium">Reason</p>
-                    <p className="text-sm font-semibold text-accent mt-1">{transaction.reason}</p>
+                    <p className="text-sm font-semibold text-accent mt-1">{transaction?.reason ?? '—'}</p>
                   </div>
                 )}
               </div>
@@ -204,18 +221,18 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                   {/* Hidden print area */}
                   <div id="bill-print-area" className="hidden">
                     <h2>🌾 Kisan Khad Bhandar</h2>
-                    <p className="sub">Bill Receipt · {formatDateTime(transaction.created_at)}</p>
-                    <p style={{textAlign:'center',marginBottom:'12px'}}>Customer: <strong>{resolvedName || transaction.customer_name}</strong></p>
+                    <p className="sub">Bill Receipt · {formatDateTime(transaction?.created_at)}</p>
+                    <p style={{ textAlign: 'center', marginBottom: '12px' }}>Customer: <strong>{resolvedName || transaction?.customer_name || 'Walk-in Customer'}</strong></p>
                     <hr className="divider" />
                     <table>
                       <thead><tr><th>Product</th><th className="center">Qty</th><th className="right">Price</th><th className="right">Total</th></tr></thead>
                       <tbody>
-                        {billItems.map((item) => (
-                          <tr key={item.id}>
-                            <td>{item.product_name}</td>
-                            <td className="center">{item.quantity}</td>
-                            <td className="right">₹{item.price}</td>
-                            <td className="right">₹{item.subtotal}</td>
+                        {(billItems || []).map((item) => (
+                          <tr key={item?.id ?? item?.product_id}>
+                            <td>{item?.product_name ?? '—'}</td>
+                            <td className="center">{item?.quantity ?? 0}</td>
+                            <td className="right">₹{item?.price ?? 0}</td>
+                            <td className="right">₹{item?.subtotal ?? 0}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -223,23 +240,23 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                     <hr className="divider" />
                     <table>
                       <tbody>
-                        <tr className="total-row"><td>Total</td><td className="right">₹{transaction.total_amount}</td></tr>
-                        <tr><td>Paid</td><td className="right success">₹{transaction.amount_paid} ({transaction.payment_mode})</td></tr>
-                        {Number(transaction.amount_due) > 0 && (
-                          <tr><td>Due (Udhar)</td><td className="right danger">₹{transaction.amount_due}</td></tr>
+                        <tr className="total-row"><td>Total</td><td className="right">₹{transaction?.total_amount ?? 0}</td></tr>
+                        <tr><td>Paid</td><td className="right success">₹{transaction?.amount_paid ?? 0} ({transaction?.payment_mode ?? 'Cash'})</td></tr>
+                        {Number(transaction?.amount_due ?? 0) > 0 && (
+                          <tr><td>Due (Udhar)</td><td className="right danger">₹{transaction?.amount_due ?? 0}</td></tr>
                         )}
                       </tbody>
                     </table>
                     <p className="footer">
-                      <strong>Kisan Khad Bhandar</strong><br/>
-                      Owner: Sachin Aggarwal<br/>
-                      Thank you for your purchase! 🙏<br/>
-                      <span style="font-size:10px;color:#666;">📍 Near Ramlela Bhavan · 📞 8126896746, 9412556628</span>
+                      <strong>Kisan Khad Bhandar</strong><br />
+                      Owner: Sachin Aggarwal<br />
+                      Thank you for your purchase! 🙏<br />
+                      <span style={{ fontSize: '10px', color: '#666' }}>📍 Near Ramlela Bhavan · 📞 8126896746, 9412556628</span>
                     </p>
                   </div>
 
                   {/* Visible items table */}
-                  {billItems.length > 0 && (
+                  {(billItems || []).length > 0 && (
                     <div>
                       <h3 className="font-serif text-base text-forest mb-3">Items Purchased</h3>
                       <div className="border border-[#D8E4C8] rounded-lg overflow-hidden">
@@ -252,12 +269,12 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#D8E4C8]/60">
-                            {billItems.map((item) => (
-                              <tr key={item.id} className="hover:bg-cream/30">
-                                <td className="px-3 py-2.5 font-medium text-forest">{item.product_name}</td>
-                                <td className="px-3 py-2.5 text-center text-forest/70">{item.quantity}</td>
-                                <td className="px-3 py-2.5 text-right text-forest/70">{formatINR(item.price, 2)}</td>
-                                <td className="px-3 py-2.5 text-right font-semibold text-forest">{formatINR(item.subtotal, 2)}</td>
+                            {(billItems || []).map((item) => (
+                              <tr key={item?.id ?? item?.product_id} className="hover:bg-cream/30">
+                                <td className="px-3 py-2.5 font-medium text-forest">{item?.product_name ?? '—'}</td>
+                                <td className="px-3 py-2.5 text-center text-forest/70">{item?.quantity ?? 0}</td>
+                                <td className="px-3 py-2.5 text-right text-forest/70">{formatINR(item?.price ?? 0, 2)}</td>
+                                <td className="px-3 py-2.5 text-right font-semibold text-forest">{formatINR(item?.subtotal ?? 0, 2)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -270,16 +287,16 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                   <div className="border border-[#D8E4C8] rounded-lg p-4 space-y-2.5 bg-cream/30">
                     <div className="flex justify-between text-sm">
                       <span className="text-forest/60">Total Amount</span>
-                      <span className="font-black text-forest text-base">{formatINR(transaction.total_amount, 2)}</span>
+                      <span className="font-black text-forest text-base">{formatINR(transaction?.total_amount ?? 0, 2)}</span>
                     </div>
                     <div className="flex justify-between text-sm border-t border-[#D8E4C8] pt-2.5">
                       <span className="text-forest/60">Amount Paid</span>
-                      <span className="font-semibold text-success">{formatINR(transaction.amount_paid, 2)}</span>
+                      <span className="font-semibold text-success">{formatINR(transaction?.amount_paid ?? 0, 2)}</span>
                     </div>
-                    {Number(transaction.amount_due) > 0 && (
+                    {Number(transaction?.amount_due ?? 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-danger/80 font-medium">Amount Due (Udhar)</span>
-                        <span className="font-black text-danger">{formatINR(transaction.amount_due, 2)}</span>
+                        <span className="font-black text-danger">{formatINR(transaction?.amount_due ?? 0, 2)}</span>
                       </div>
                     )}
                   </div>
@@ -299,9 +316,9 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                 <div className="border border-[#D8E4C8] rounded-lg p-4 bg-success/[0.03]">
                   <div className="flex justify-between items-center">
                     <span className="text-forest/60 text-sm">Payment Received</span>
-                    <span className="font-black text-2xl text-success">{formatINR(transaction.amount, 2)}</span>
+                    <span className="font-black text-2xl text-success">{formatINR(transaction?.amount ?? 0, 2)}</span>
                   </div>
-                  <p className="text-xs text-forest/40 mt-2">Recorded on {formatDateTime(transaction.created_at)}</p>
+                  <p className="text-xs text-forest/40 mt-2">Recorded on {formatDateTime(transaction?.created_at)}</p>
                 </div>
               )}
 
@@ -311,16 +328,16 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-forest/50 font-medium">Product</p>
-                      <p className="text-sm font-semibold text-forest mt-0.5">{transaction.product_name}</p>
+                      <p className="text-sm font-semibold text-forest mt-0.5">{transaction?.product_name ?? '—'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-forest/50 font-medium">Qty Returned</p>
-                      <p className="text-sm font-bold text-forest mt-0.5">{transaction.quantity}</p>
+                      <p className="text-sm font-bold text-forest mt-0.5">{transaction?.quantity ?? 0}</p>
                     </div>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-[#D8E4C8]">
                     <span className="text-forest/60 text-sm">Refund Amount</span>
-                    <span className="font-black text-2xl text-accent">{formatINR(transaction.refund_amount, 2)}</span>
+                    <span className="font-black text-2xl text-accent">{formatINR(transaction?.refund_amount ?? 0, 2)}</span>
                   </div>
                 </div>
               )}
@@ -330,7 +347,7 @@ export default function TransactionDetailModal({ isOpen, transaction, onClose })
 
         {/* Footer */}
         <div className="p-4 border-t border-[#D8E4C8] bg-cream/20 flex justify-between items-center gap-3 shrink-0 no-print">
-          {isBill ? (
+          {isBill && !error && !loading ? (
             <div className="flex gap-2 no-print">
               <button
                 type="button"
