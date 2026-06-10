@@ -7,11 +7,13 @@ import {
   Package,
   Pencil,
   Plus,
+  PlusCircle,
   Search,
   Trash2,
 } from 'lucide-react'
 import DeleteConfirmModal from '../components/Inventory/DeleteConfirmModal'
 import ProductModal from '../components/Inventory/ProductModal'
+import RestockModal from '../components/Inventory/RestockModal'
 import { useProducts } from '../hooks/useProducts'
 import { formatINR } from '../utils/format'
 
@@ -29,7 +31,7 @@ const inputClass =
   'w-full px-4 py-2.5 rounded-lg border border-primary/20 bg-white text-forest placeholder:text-forest/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-colors'
 
 export default function InventoryPage() {
-  const { products, loading, addProduct, updateProduct, deleteProduct, seedProducts } = useProducts()
+  const { products, loading, addProduct, updateProduct, deleteProduct, refresh, seedProducts } = useProducts()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [modalOpen, setModalOpen] = useState(false)
@@ -37,6 +39,8 @@ export default function InventoryPage() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [restockOpen, setRestockOpen] = useState(false)
+  const [restockProduct, setRestockProduct] = useState(null)
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -229,6 +233,18 @@ export default function InventoryPage() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
+                              onClick={() => {
+                                setRestockProduct(product)
+                                setRestockOpen(true)
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-sm hover:bg-primary/90 transition-colors"
+                              title="Restock"
+                            >
+                              <PlusCircle className="w-3.5 h-3.5" />
+                              Restock
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => openEditModal(product)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary/20 text-forest text-sm hover:bg-cream transition-colors"
                             >
@@ -270,6 +286,22 @@ export default function InventoryPage() {
         onCancel={() => setDeleteTarget(null)}
         deleting={deleting}
       />
+
+      {restockOpen && (
+        <RestockModal
+          isOpen={restockOpen}
+          product={restockProduct}
+          onClose={() => {
+            setRestockOpen(false)
+            setRestockProduct(null)
+          }}
+          onSuccess={async () => {
+            setRestockOpen(false)
+            setRestockProduct(null)
+            await refresh()
+          }}
+        />
+      )}
     </div>
   )
 }
