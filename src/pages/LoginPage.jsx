@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Sprout } from 'lucide-react'
+import { Loader2, Wheat } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 
@@ -28,13 +28,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white border border-primary/20 rounded-2xl shadow-sm p-8">
+        <div className="bg-white border border-primary/20 border-t-4 border-t-[#D4870E] rounded-2xl shadow-sm p-8">
           <div className="flex flex-col items-center mb-8">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Sprout className="w-7 h-7 text-primary" strokeWidth={1.75} />
+              <Wheat className="w-7 h-7 text-[#2D5A1A]" strokeWidth={1.75} />
             </div>
-            <h1 className="font-serif text-4xl text-forest tracking-tight">AgriShop</h1>
-            <p className="text-forest/60 mt-1 text-sm">Inventory &amp; Billing Management</p>
+            <h1 className="font-serif text-4xl text-[#2D5A1A] tracking-tight">Kisan Khad Bhandar</h1>
+            <p className="text-forest/60 mt-1 text-sm font-sans">Inventory &amp; Billing Management System</p>
+            <p className="text-[#D4870E] mt-1 text-xs font-semibold">Owned by Sachin Aggarwal</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

@@ -47,6 +47,7 @@ async function resolveCustomer({
       .from('customers')
       .select('id, total_pending')
       .eq('phone', phone)
+      .eq('name', customerName)
       .maybeSingle()
 
     if (lookupError) throw lookupError

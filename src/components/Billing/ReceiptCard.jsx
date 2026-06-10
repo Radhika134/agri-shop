@@ -42,7 +42,7 @@ export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
       className="bg-white border-2 border-dashed border-[#D8E4C8] rounded-xl p-6 sm:p-8 shadow-sm"
     >
       <div className="text-center mb-6">
-        <h1 className="font-serif text-3xl text-primary">AgriShop</h1>
+        <h1 className="font-serif text-3xl text-primary">Kisan Khad Bhandar</h1>
         <p className="text-forest/50 text-sm mt-1">{formatDateTime(bill.created_at)}</p>
       </div>
 
@@ -90,6 +90,13 @@ export default function ReceiptCard({ bill, printId = 'receipt-print' }) {
         <p className="text-sm text-forest/70">
           <span className="text-forest/60">Payment:</span> {getPaymentLabel(bill)}
         </p>
+      </div>
+
+      <div className="border-t border-dashed border-[#D8E4C8] pt-4 mt-6 text-center text-xs text-forest/60 space-y-1">
+        <p className="font-bold text-forest text-sm">Kisan Khad Bhandar</p>
+        <p>Owner: Sachin Aggarwal</p>
+        <p className="font-semibold text-primary mt-1">Thank you for your purchase! 🙏</p>
+        <p className="text-[10px] mt-1 text-forest/40">📍 Near Ramlela Bhavan · 📞 8126896746, 9412556628</p>
       </div>
     </div>
   )

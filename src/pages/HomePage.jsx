@@ -17,7 +17,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-cream p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white border border-primary/20 rounded-2xl shadow-sm p-8">
-          <h1 className="font-serif text-3xl text-forest">Welcome to AgriShop</h1>
+          <h1 className="font-serif text-3xl text-forest">Welcome to Kisan Khad Bhandar</h1>
           <p className="text-forest/60 mt-2">Signed in as {user?.email}</p>
           <button
             type="button"

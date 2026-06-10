@@ -29,7 +29,7 @@ const inputClass =
   'w-full px-4 py-2.5 rounded-lg border border-primary/20 bg-white text-forest placeholder:text-forest/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-colors'
 
 export default function InventoryPage() {
-  const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts()
+  const { products, loading, addProduct, updateProduct, deleteProduct, seedProducts } = useProducts()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [modalOpen, setModalOpen] = useState(false)
@@ -114,6 +114,16 @@ export default function InventoryPage() {
               ))}
             </select>
 
+            {products.length === 0 && (
+              <button
+                type="button"
+                onClick={seedProducts}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-primary/20 text-forest font-medium hover:bg-cream transition-colors whitespace-nowrap"
+              >
+                Seed Sample Products
+              </button>
+            )}
+
             <button
               type="button"
               onClick={openAddModal}
@@ -142,6 +152,15 @@ export default function InventoryPage() {
                   ? 'No products found. Add your first product!'
                   : 'No products match your search.'}
               </p>
+              {products.length === 0 && (
+                <button
+                  type="button"
+                  onClick={seedProducts}
+                  className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors"
+                >
+                  Seed Sample Products
+                </button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

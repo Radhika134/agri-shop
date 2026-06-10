@@ -7,8 +7,10 @@ import {
   Package,
   Plus,
   Receipt,
+  RotateCcw,
   ShoppingCart,
   Smartphone,
+  TrendingUp,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import BillDetailModal from '../components/Dashboard/BillDetailModal'
@@ -62,42 +64,18 @@ function SkeletonRows({ count = 3 }) {
   )
 }
 
-function RevenueBreakdown({ breakdown, loading }) {
+function RevenueBreakdown({ breakdown, todayReturns, loading }) {
   const { totalRevenue, totalCash, totalUpi, totalUdharDue, totalUdharSales } = breakdown
+  const netRevenue = Math.max(0, totalRevenue - todayReturns)
 
   const cashPct = totalRevenue > 0 ? (totalCash / totalRevenue) * 100 : 0
   const upiPct = totalRevenue > 0 ? (totalUpi / totalRevenue) * 100 : 0
   const udharPct = totalRevenue > 0 ? (totalUdharSales / totalRevenue) * 100 : 0
 
-  const items = [
-    {
-      label: 'Total Revenue',
-      value: formatINR(totalRevenue),
-      icon: null,
-      valueClass: 'text-success font-bold',
-      sub: null,
-    },
-    {
-      label: 'Cash',
-      value: formatINR(totalCash),
-      icon: Banknote,
-      valueClass: 'text-success',
-      sub: totalRevenue > 0 ? `${cashPct.toFixed(0)}%` : null,
-    },
-    {
-      label: 'UPI',
-      value: formatINR(totalUpi),
-      icon: Smartphone,
-      valueClass: 'text-teal',
-      sub: totalRevenue > 0 ? `${upiPct.toFixed(0)}%` : null,
-    },
-    {
-      label: 'Udhar / Baaki',
-      value: formatINR(totalUdharDue),
-      icon: Clock,
-      valueClass: 'text-danger',
-      sub: totalRevenue > 0 ? `${udharPct.toFixed(0)}% sales` : null,
-    },
+  const modeItems = [
+    { label: 'Cash', value: formatINR(totalCash), icon: Banknote, valueClass: 'text-success', sub: totalRevenue > 0 ? `${cashPct.toFixed(0)}%` : null },
+    { label: 'UPI', value: formatINR(totalUpi), icon: Smartphone, valueClass: 'text-teal', sub: totalRevenue > 0 ? `${upiPct.toFixed(0)}%` : null },
+    { label: 'Udhar / Baaki', value: formatINR(totalUdharDue), icon: Clock, valueClass: 'text-danger', sub: totalRevenue > 0 ? `${udharPct.toFixed(0)}% sales` : null },
   ]
 
   return (
@@ -106,78 +84,83 @@ function RevenueBreakdown({ breakdown, loading }) {
 
       {loading ? (
         <div className="space-y-4">
-          <div className="h-10 w-48 bg-forest/10 rounded animate-pulse" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-20 bg-forest/5 rounded-lg animate-pulse" />
             ))}
           </div>
-          <div className="h-3 bg-forest/5 rounded-full animate-pulse" />
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-16 bg-forest/5 rounded-lg animate-pulse" />
+            ))}
+          </div>
+          <div className="h-3 bg-forest/5 rounded-full animate-pulse mt-4" />
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {items.map((item) => (
-              <div
-                key={item.label}
-                className={`rounded-lg p-4 ${item.label === 'Total Revenue' ? 'bg-success/5 border border-success/20 col-span-2 lg:col-span-1' : 'bg-cream/50 border border-[#D8E4C8]/60'}`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  {item.icon && (
-                    <item.icon className={`w-4 h-4 ${item.valueClass}`} strokeWidth={1.75} />
-                  )}
-                  <p className="text-sm text-forest/60">{item.label}</p>
+          {/* ── Top 3 summary tiles ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {/* Total Sales */}
+            <div className="rounded-xl p-4 bg-cream/50 border border-[#D8E4C8]/60">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Receipt className="w-4 h-4 text-forest/50" strokeWidth={1.75} />
+                <p className="text-sm text-forest/60">Total Sales</p>
+              </div>
+              <p className="text-2xl font-bold text-forest">{formatINR(totalRevenue)}</p>
+            </div>
+
+            {/* Total Returns */}
+            <div className="rounded-xl p-4 bg-danger/[0.04] border border-danger/15">
+              <div className="flex items-center gap-2 mb-1.5">
+                <RotateCcw className="w-4 h-4 text-danger" strokeWidth={1.75} />
+                <p className="text-sm text-danger/70">Total Returns</p>
+              </div>
+              <p className="text-2xl font-bold text-danger">− {formatINR(todayReturns)}</p>
+            </div>
+
+            {/* Net Revenue */}
+            <div className="rounded-xl p-4 bg-success/[0.06] border border-success/20">
+              <div className="flex items-center gap-2 mb-1.5">
+                <TrendingUp className="w-4 h-4 text-success" strokeWidth={1.75} />
+                <p className="text-sm text-success/70 font-medium">Net Revenue</p>
+              </div>
+              <p className="text-2xl font-black text-success">{formatINR(netRevenue)}</p>
+            </div>
+          </div>
+
+          {/* ── Mode Breakdown ── */}
+          <p className="text-xs font-semibold text-forest/40 uppercase tracking-widest mb-3">Payment Mode Breakdown</p>
+          <div className="grid grid-cols-3 gap-3">
+            {modeItems.map((item) => (
+              <div key={item.label} className="rounded-lg p-3 bg-cream/50 border border-[#D8E4C8]/60">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <item.icon className={`w-3.5 h-3.5 ${item.valueClass}`} strokeWidth={1.75} />
+                  <p className="text-xs text-forest/55">{item.label}</p>
                 </div>
-                <p className={`text-xl sm:text-2xl ${item.valueClass}`}>{item.value}</p>
-                {item.sub && <p className="text-xs text-forest/40 mt-1">{item.sub}</p>}
+                <p className={`text-lg font-bold ${item.valueClass}`}>{item.value}</p>
+                {item.sub && <p className="text-xs text-forest/40 mt-0.5">{item.sub}</p>}
               </div>
             ))}
           </div>
 
-          {totalRevenue > 0 ? (
-            <div className="mt-6">
-              <div className="flex h-3 rounded-full overflow-hidden bg-forest/5">
-                {cashPct > 0 && (
-                  <div
-                    className="bg-success transition-all"
-                    style={{ width: `${cashPct}%` }}
-                    title={`Cash ${cashPct.toFixed(0)}%`}
-                  />
-                )}
-                {upiPct > 0 && (
-                  <div
-                    className="bg-teal transition-all"
-                    style={{ width: `${upiPct}%` }}
-                    title={`UPI ${upiPct.toFixed(0)}%`}
-                  />
-                )}
-                {udharPct > 0 && (
-                  <div
-                    className="bg-danger/70 transition-all"
-                    style={{ width: `${udharPct}%` }}
-                    title={`Udhar ${udharPct.toFixed(0)}%`}
-                  />
-                )}
+          {/* ── Stacked bar ── */}
+          {totalRevenue > 0 && (
+            <div className="mt-5">
+              <div className="flex h-2.5 rounded-full overflow-hidden bg-forest/5">
+                {cashPct > 0 && <div className="bg-success transition-all" style={{ width: `${cashPct}%` }} title={`Cash ${cashPct.toFixed(0)}%`} />}
+                {upiPct > 0 && <div className="bg-teal transition-all" style={{ width: `${upiPct}%` }} title={`UPI ${upiPct.toFixed(0)}%`} />}
+                {udharPct > 0 && <div className="bg-danger/70 transition-all" style={{ width: `${udharPct}%` }} title={`Udhar ${udharPct.toFixed(0)}%`} />}
               </div>
-              <div className="flex flex-wrap gap-4 mt-3 text-xs text-forest/60">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-success" />
-                  Cash {cashPct.toFixed(0)}%
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-teal" />
-                  UPI {upiPct.toFixed(0)}%
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-danger/70" />
-                  Udhar {udharPct.toFixed(0)}%
-                </span>
+              <div className="flex flex-wrap gap-4 mt-2.5 text-xs text-forest/55">
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success" />Cash {cashPct.toFixed(0)}%</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal" />UPI {upiPct.toFixed(0)}%</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger/70" />Udhar {udharPct.toFixed(0)}%</span>
               </div>
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-forest/50 text-center py-2">
-              No sales recorded today yet
-            </p>
+          )}
+
+          {totalRevenue === 0 && (
+            <p className="mt-4 text-sm text-forest/50 text-center py-2">No sales recorded today yet</p>
           )}
         </>
       )}
@@ -206,6 +189,7 @@ export default function DashboardPage() {
     totalUdharDue: 0,
     totalUdharSales: 0,
   })
+  const [todayReturns, setTodayReturns] = useState(0)
   const [lowStockProducts, setLowStockProducts] = useState([])
   const [recentBills, setRecentBills] = useState([])
   const [selectedBillId, setSelectedBillId] = useState(null)
@@ -221,7 +205,7 @@ export default function DashboardPage() {
       try {
         const { start, end } = getTodayBounds()
 
-        const [productsResult, todayBillsResult] = await Promise.all([
+        const [productsResult, todayBillsResult, todayReturnsResult] = await Promise.all([
           supabase
             .from('products')
             .select('id, name, stock_quantity, low_stock_threshold, category'),
@@ -230,10 +214,16 @@ export default function DashboardPage() {
             .select('total_amount, payment_mode, amount_due')
             .gte('created_at', start)
             .lte('created_at', end),
+          supabase
+            .from('returns')
+            .select('refund_amount')
+            .gte('created_at', start)
+            .lte('created_at', end),
         ])
 
         if (productsResult.error) throw productsResult.error
         if (todayBillsResult.error) throw todayBillsResult.error
+        if (todayReturnsResult.error) throw todayReturnsResult.error
 
         let recentBillsResult = await supabase
           .from('bills')
@@ -259,12 +249,18 @@ export default function DashboardPage() {
         )
         const todayBills = todayBillsResult.data ?? []
 
+        const returnsTotal = (todayReturnsResult.data ?? []).reduce(
+          (s, r) => s + (Number(r.refund_amount) || 0),
+          0,
+        )
+
         setStats({
           totalProducts: products.length,
           lowStockCount: lowStock.length,
           todayBillsCount: todayBills.length,
         })
         setRevenueBreakdown(calculateRevenueBreakdown(todayBills))
+        setTodayReturns(returnsTotal)
 
         setLowStockProducts(
           [...lowStock].sort((a, b) => a.stock_quantity - b.stock_quantity),
@@ -336,8 +332,8 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-forest">Dashboard</h1>
-            <p className="text-forest/60 mt-1">Overview of your shop today</p>
+            <h1 className="font-serif text-3xl text-forest">Kisan Khad Bhandar Dashboard</h1>
+            <p className="text-forest/60 mt-1 text-sm font-sans">Welcome, Sachin Aggarwal</p>
           </div>
           <button
             type="button"
@@ -376,7 +372,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <RevenueBreakdown breakdown={revenueBreakdown} loading={loading} />
+        <RevenueBreakdown breakdown={revenueBreakdown} todayReturns={todayReturns} loading={loading} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <SectionCard title="Low Stock Alerts" className="lg:col-span-2">
@@ -415,7 +411,7 @@ export default function DashboardPage() {
             action={
               <button
                 type="button"
-                onClick={() => navigate('/bill-history')}
+                onClick={() => navigate('/transactions')}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 View all →
@@ -482,11 +478,11 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/bill-history')}
+              onClick={() => navigate('/transactions')}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-primary/20 text-forest font-medium hover:bg-cream transition-colors"
             >
               <Receipt className="w-4 h-4" />
-              Bill History
+              Shop Diary
             </button>
           </div>
         </SectionCard>

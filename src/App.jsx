@@ -7,7 +7,9 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import InventoryPage from './pages/InventoryPage'
 import BillingPage from './pages/BillingPage'
-import BillHistoryPage from './pages/BillHistoryPage'
+import KhataPage from './pages/KhataPage'
+import TransactionHistoryPage from './pages/TransactionHistoryPage'
+import ReturnsPage from './pages/ReturnsPage'
 
 export default function App() {
   return (
@@ -37,7 +39,9 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/billing" element={<BillingPage />} />
-              <Route path="/bill-history" element={<BillHistoryPage />} />
+              <Route path="/khata" element={<KhataPage />} />
+              <Route path="/transactions" element={<TransactionHistoryPage />} />
+              <Route path="/returns" element={<ReturnsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />

@@ -1,3 +1,5 @@
+import { formatIndianDate } from '../lib/utils'
+
 export function formatINR(amount, fractionDigits = 0) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -8,15 +10,7 @@ export function formatINR(amount, fractionDigits = 0) {
 }
 
 export function formatDateTime(dateString) {
-  const date = dateString ? new Date(dateString) : new Date()
-  return date.toLocaleString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
+  return formatIndianDate(dateString)
 }
 
 export function formatRelativeTime(dateString) {
@@ -24,18 +18,14 @@ export function formatRelativeTime(dateString) {
   const diffMs = Date.now() - date.getTime()
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
-  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  if (diffHours < 24) {
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+  }
 
-  return date.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatIndianDate(dateString)
 }
 
 export function calculateRevenueBreakdown(bills) {
