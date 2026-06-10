@@ -18,7 +18,7 @@ export function usePWAInstall() {
     }
   }, [])
 
-  const installApp = async () => {
+  const promptInstall = async () => {
     if (!deferredPrompt) return false
 
     deferredPrompt.prompt()
@@ -32,6 +32,6 @@ export function usePWAInstall() {
 
   return {
     isInstallable: !!deferredPrompt,
-    installApp,
+    promptInstall,
   }
 }

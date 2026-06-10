@@ -22,7 +22,7 @@ const navItems = [
 ]
 
 export default function Sidebar({ isOpen, onClose, onSignOut }) {
-  const { isInstallable, installApp } = usePWAInstall()
+  const { isInstallable, promptInstall } = usePWAInstall()
 
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
@@ -70,8 +70,8 @@ export default function Sidebar({ isOpen, onClose, onSignOut }) {
         {isInstallable && (
           <button
             type="button"
-            onClick={installApp}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-[#D4870E] hover:bg-[#D4870E]/90 text-white transition-colors cursor-pointer"
+            onClick={promptInstall}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-[#2D5A1A] hover:bg-[#2D5A1A]/90 text-white transition-colors cursor-pointer"
           >
             <Download className="w-4.5 h-4.5" />
             <span>Install App</span>
